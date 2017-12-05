@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "mongodb": "^2.2.33",
     "node-telegram-bot-api": "^0.29.0"
   },
   "devDependencies": {},
