@@ -64,7 +64,7 @@ bot.onText(/\/get_all_usr/, (msg, match) => {
     });
 });
 
-bot.onText(/\/get_all/, (msg, match) => {
+bot.onText(/\/(get_all$)/, (msg, match) => {
     MongoClient.connect(url, function(err, db){
         if(err){
             return console.log(err);
@@ -90,8 +90,9 @@ bot.onText(/\/who (\d+)/, (msg, match) => {
         db.collection("messages").find().toArray(function(err, results){
             const chatId = msg.chat.id;
             var iter = match[1];
-            db.collection("users").find({chatId: results[iter].author}).toArray(function(err, results){
-                var str =  results.chatName ;
+            var who = results[iter].author;
+            db.collection("users").find({chatId: who}).toArray(function(err, results){
+                var str =  results[0].chatName ;
                 bot.sendMessage(chatId, str);
                 console.log(results);
                 db.close();
@@ -106,7 +107,7 @@ bot.onText(/\/get_my/, (msg, match) => {
             return console.log(err);
         }
         const chatId = msg.chat.id;
-        db.collection("messages").find({chatId: chatId}).toArray(function(err, results){
+        db.collection("messages").find({author: chatId}).toArray(function(err, results){
             const chatId = msg.chat.id;
             for(let i=0;i<results.length;i++){
                 var str = i + ": " + results[i].top + " " + results[i].message;
@@ -183,20 +184,25 @@ bot.onText(/\/start/, (msg, match) => {
         }
         else{
             const chatId = msg.chat.id;
-            const chatName = conmsg.chat.username;
-            var user = {
-                chatId: chatId,
-                chatName: chatName
-                };
+            const chatName = msg.chat.username;
             var users = db.collection("users");
-            var err = users.insertOne(user,function(err, result){
-                if(err){
-                    return console.log(err);
+            users.find({chatId: chatId}).toArray(function(err, results){
+                if(results.length==0){
+                    var user = {
+                        chatId: chatId,
+                        chatName: chatName
+                        };
+                    //var users = db.collection("users");
+                    var err = users.insertOne(user,function(err, result){
+                        if(err){
+                            return console.log(err);
+                        }
+                        console.log(result.ops);
+                        var str = 'Здраствуйте '+ user.chatName + ", ваш чатID: "+ user.chatId;
+                        bot.sendMessage(chatId, str);
+                        db.close();
+                    });
                 }
-                console.log(result.ops);
-                var str = 'Здраствуйте '+ user.chatName + ", ваш чатID: "+ user.chatId;
-                bot.sendMessage(chatId, str);
-                db.close();
             });
         }
     });
@@ -207,8 +213,11 @@ bot.onText(/\/drop 3259/, (msg, match) => {
         if(err){
             return console.log(err);
         }
-        var messages = db.collection("messages");
-        messages.drop();
+        /*
+        var messages = db.collection("users");
+        messages.drop();*/
+        var users = db.collection("users");
+        users.drop();
         db.close();
     });
 });
