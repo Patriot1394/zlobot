@@ -17,8 +17,7 @@ MongoClient.connect(url, function(err, db) {
     db.close();
 });
 
-bot.onText(/\/ad (.+) i (.+)/, (msg, match) => {
-    
+bot.onText(/\/add (.+) & (.+)/, (msg, match) => {
     MongoClient.connect(url, function(err, db) {
         if(err){
             return console.log(err);
@@ -28,6 +27,7 @@ bot.onText(/\/ad (.+) i (.+)/, (msg, match) => {
             var top = match[1]; 
             var message = match[2];
             var post = {
+                author: chatId,
                 top: top,
                 message: message
                 };
@@ -45,6 +45,25 @@ bot.onText(/\/ad (.+) i (.+)/, (msg, match) => {
     });
 });
 
+
+bot.onText(/\/get_all_usr/, (msg, match) => {
+    MongoClient.connect(url, function(err, db){
+        if(err){
+            return console.log(err);
+        }
+        db.collection("users").find().toArray(function(err, results){
+            const chatId = msg.chat.id;
+            for(var i=0;i<results.length;i++){
+                var str = i + ": " + results[i].chatId + " " + results[i].chatName;
+                bot.sendMessage(chatId, str);
+            }
+
+            console.log(results);
+            db.close();
+        });
+    });
+});
+
 bot.onText(/\/get_all/, (msg, match) => {
     MongoClient.connect(url, function(err, db){
         if(err){
@@ -53,10 +72,46 @@ bot.onText(/\/get_all/, (msg, match) => {
         db.collection("messages").find().toArray(function(err, results){
             const chatId = msg.chat.id;
             for(var i=0;i<results.length;i++){
-                var str = i + " " + results[i].top + " " + results[i].message;
+                var str = i + ": " + results[i].top + " " + results[i].message;
                 bot.sendMessage(chatId, str);
             }
+            console.log(results);
+            db.close();
+        });
+    });
+});
 
+bot.onText(/\/who (\d+)/, (msg, match) => {
+    MongoClient.connect(url, function(err, db){
+        if(err){
+            return console.log(err);
+        }
+        const chatId = msg.chat.id;
+        db.collection("messages").find().toArray(function(err, results){
+            const chatId = msg.chat.id;
+            var iter = match[1];
+            db.collection("users").find({chatId: results[iter].author}).toArray(function(err, results){
+                var str =  results.chatName ;
+                bot.sendMessage(chatId, str);
+                console.log(results);
+                db.close();
+            });
+        });
+    });
+});
+
+bot.onText(/\/get_my/, (msg, match) => {
+    MongoClient.connect(url, function(err, db){
+        if(err){
+            return console.log(err);
+        }
+        const chatId = msg.chat.id;
+        db.collection("messages").find({chatId: chatId}).toArray(function(err, results){
+            const chatId = msg.chat.id;
+            for(let i=0;i<results.length;i++){
+                var str = i + ": " + results[i].top + " " + results[i].message;
+                bot.sendMessage(chatId, str);
+            }
             console.log(results);
             db.close();
         });
@@ -72,11 +127,10 @@ bot.onText(/\/get (.+)/, (msg, match) => {
         const top = match[1]; 
         db.collection("messages").find({top: top}).toArray(function(err, results){
             const chatId = msg.chat.id;
-            for(var i=0;i<results.length;i++){
-                var str = i + " " + results[i].top + " " + results[i].message;
+            for(let i=0;i<results.length;i++){
+                var str = i + ": " + results[i].top + " " + results[i].message;
                 bot.sendMessage(chatId, str);
             }
-
             console.log(results);
             db.close();
         });
@@ -84,7 +138,7 @@ bot.onText(/\/get (.+)/, (msg, match) => {
 });
 
 setInterval(function(){
-    for (var i = 0; i < notes.length; i++){
+    for (var i = 0; i < notes.length; i++){ 
         var curDate = new Date().getHours() + ':' + new Date().getMinutes();
         if ( notes[i]['time'] == curDate ) {
             bot.sendMessage(notes[i]['uid'], 'Напоминаю, что вы должны: '+ notes[i]['text'] + ' сейчас.');
@@ -94,20 +148,69 @@ setInterval(function(){
 },1000);
 
 
-bot.onText(/\/start/, (msg, match) => {
-    
-      const chatId = msg.chat.id;
-      const resp = match[1]; 
-    
-      bot.sendMessage(chatId, 'молодца');
+bot.onText(/\/name (.+)/, (msg, match) => {
+    MongoClient.connect(url, function(err, db) {
+        if(err){
+            return console.log(err);
+        }
+        else{
+            const chatId = msg.chat.id;
+            const chatName = match[1]; 
+            var users = db.collection("users");
+            var err = users.findOneAndUpdate(
+                {chatId: chatId},
+                { $set:{chatName: chatName}},
+                {
+                    returnOriginal: false
+                },
+                function(err,result){
+                if(err){
+                    return console.log(err);
+                }
+                console.log(result.ops);
+                var str = 'Ваш новый ник: '+ result.chatName ;
+                bot.sendMessage(chatId, str);
+                db.close();
+            });
+        }
+    });
 });
 
-bot.onText(/\/echo (.+)/, (msg, match) => {
-  
-    const chatId = msg.chat.id;
-    const resp = match[1]; 
-  
-    bot.sendMessage(chatId, resp);
+bot.onText(/\/start/, (msg, match) => {
+    MongoClient.connect(url, function(err, db) {
+        if(err){
+            return console.log(err);
+        }
+        else{
+            const chatId = msg.chat.id;
+            const chatName = conmsg.chat.username;
+            var user = {
+                chatId: chatId,
+                chatName: chatName
+                };
+            var users = db.collection("users");
+            var err = users.insertOne(user,function(err, result){
+                if(err){
+                    return console.log(err);
+                }
+                console.log(result.ops);
+                var str = 'Здраствуйте '+ user.chatName + ", ваш чатID: "+ user.chatId;
+                bot.sendMessage(chatId, str);
+                db.close();
+            });
+        }
+    });
+});
+
+bot.onText(/\/drop 3259/, (msg, match) => {
+    MongoClient.connect(url, function(err, db) {
+        if(err){
+            return console.log(err);
+        }
+        var messages = db.collection("messages");
+        messages.drop();
+        db.close();
+    });
 });
 
 bot.onText(/\/help (.+)/, (msg, match) => {
