@@ -109,7 +109,7 @@ bot.onText(/\/get_my/, (msg, match) => {
         const chatId = msg.chat.id;
         db.collection("messages").find({author: chatId}).toArray(function(err, results){
             const chatId = msg.chat.id;
-            for(let i=0;i<results.length;i++){
+            for(var i=0;i<results.length;i++){
                 var str = i + ": " + results[i].top + " " + results[i].message;
                 bot.sendMessage(chatId, str);
             }
@@ -128,7 +128,7 @@ bot.onText(/\/get (.+)/, (msg, match) => {
         const top = match[1]; 
         db.collection("messages").find({top: top}).toArray(function(err, results){
             const chatId = msg.chat.id;
-            for(let i=0;i<results.length;i++){
+            for(var i=0;i<results.length;i++){
                 var str = i + ": " + results[i].top + " " + results[i].message;
                 bot.sendMessage(chatId, str);
             }
@@ -169,7 +169,7 @@ bot.onText(/\/name (.+)/, (msg, match) => {
                     return console.log(err);
                 }
                 console.log(result.ops);
-                var str = 'Ваш новый ник: '+ result.chatName ;
+                var str = 'Ваш новый ник: '+ result.value.chatName ;
                 bot.sendMessage(chatId, str);
                 db.close();
             });
