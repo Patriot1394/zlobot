@@ -220,8 +220,6 @@ bot.onText(/\/start/, (msg, match) => {
             return console.log(err);
         }
         else{
-            var flag1 = false;
-            var flag2 = false;
             const chatId = msg.chat.id;
             const chatName = msg.chat.username;
             var users = db.collection("users");
@@ -231,48 +229,16 @@ bot.onText(/\/start/, (msg, match) => {
                         chatId: chatId,
                         chatName: chatName
                         };
-                    bot.sendMessage(chatId, 'Ваш ник: '+chatName+"\nХотите его сменить? да/нет");
-                    do{
-                        bot.once('message', (msg) => {
-                            if(chatId == msg.chat.id){
-                                if(msg.text.toString().toLowerCase()=="да"){
-                                    bot.sendMessage(chatId, 'Введите ник');
-                                    do{
-                                        bot.once('message', (msg) => {
-                                            if(chatId == msg.chat.id){
-                                                user.chatName=msg.text.toString();
-                                                var err = users.insertOne(user,function(err, result){
-                                                    if(err){
-                                                        return console.log(err);
-                                                    }
-                                                    console.log(result.ops);
-                                                    var str = 'Здраствуйте '+ user.chatName + ", ваш чатID: "+ user.chatId + "\nВ дальнешем вы можете сменить ник по комaнде /name";
-                                                    bot.sendMessage(chatId, str);
-                                                    db.close();
-                                                });
-                                                flag2=false;
-                                            }else{
-                                                flag2=true;
-                                            }
-                                        });
-                                    }while(flag2);
-                                }else{
-                                    var err = users.insertOne(user,function(err, result){
-                                        if(err){
-                                            return console.log(err);
-                                        }
-                                        console.log(result.ops);
-                                        var str = 'Здраствуйте '+ user.chatName + ", ваш чатID: "+ user.chatId;
-                                        bot.sendMessage(chatId, str);
-                                        db.close();
-                                    });
-                                }
-                                flag1=false;
-                            }else{
-                                flag1=true;
-                            }
-                        });
-                    }while(flag1);
+                    bot.sendMessage(chatId, 'Ваш ник: '+chatName+"\nВ дальнешем вы можете сменить ник по комaнде /name");
+                    var err = users.insertOne(user,function(err, result){
+                        if(err){
+                            return console.log(err);
+                        }
+                        console.log(result.ops);
+                        var str = 'Здраствуйте '+ user.chatName + ", ваш чатID: "+ user.chatId + "\nВ дальнешем вы можете сменить ник по комaнде /name";
+                        bot.sendMessage(chatId, str);
+                        db.close();
+                    });
                 }
             });
         }
