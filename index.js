@@ -229,7 +229,6 @@ bot.onText(/\/start/, (msg, match) => {
                         chatId: chatId,
                         chatName: chatName
                         };
-                    bot.sendMessage(chatId, 'Ваш ник: '+chatName+"\nВ дальнешем вы можете сменить ник по комaнде /name");
                     var err = users.insertOne(user,function(err, result){
                         if(err){
                             return console.log(err);
